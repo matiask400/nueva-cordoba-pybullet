@@ -47,5 +47,9 @@
     "tamano_m": 50,
     "radio_chunks": 2,
     "retencion_chunks": 1
+  },
+  "escala": {
+    "divisor": 1,
+    "altura_minima_edificio_m": null
   }
 }

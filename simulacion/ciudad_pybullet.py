@@ -109,7 +109,7 @@ class CargaPorChunks:
         self.tamano = float(opciones.get('tamano_m', 50))
         self.radio = int(opciones.get('radio_chunks', 2))
         self.retencion = int(opciones.get('retencion_chunks', 1))
-        if not math.isfinite(self.tamano) or self.tamano < 5 or not 0 <= self.radio <= 10 or not 0 <= self.retencion <= 5:
+        if not math.isfinite(self.tamano) or self.tamano <= 0 or not 0 <= self.radio <= 10 or not 0 <= self.retencion <= 5:
             raise ValueError('Configuración inválida de chunks')
         self.indice = defaultdict(set)
         self.cargados = {}

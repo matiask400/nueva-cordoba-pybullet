@@ -38,13 +38,15 @@ class FisicaUrbana:
         velocidad = np.linalg.norm(viento[:2])
         if not cfg.get('activo', False) or velocidad < 1e-6:
             return viento
-        alcance = float(cfg.get('alcance_m', 30))
+        alcance = float(cfg.get('alcance_m', 30)) * self.mapa.get('factor_escala', 1)
         reduccion = float(cfg.get('reduccion_maxima', .65))
-        if not math.isfinite(alcance) or alcance <= .15 or not 0 <= reduccion <= 1:
+        if not math.isfinite(alcance) or alcance <= 0 or not 0 <= reduccion <= 1:
             raise ValueError('Configuración inválida del viento urbano')
         direccion = viento[:2] / velocidad
         lateral = np.array([-direccion[1], direccion[0]])
         origen = np.asarray(posicion, dtype=float)
+        if alcance <= .15:
+            return viento
         rayos = []
         for offset in (0., -.22, .22):
             rumbo = np.r_[-direccion + offset * lateral, 0.]
@@ -85,7 +87,7 @@ class FisicaUrbana:
             for r in candidates:
                 run=[]
                 for point in r['p']:
-                    if np.linalg.norm(np.asarray(point)-center)<radius-5:run.append(point)
+                    if np.linalg.norm(np.asarray(point)-center)<radius-5*self.mapa.get('factor_escala', 1):run.append(point)
                     else:
                         if len(run)>1:cropped.append({**r,'p':run})
                         run=[]
@@ -94,9 +96,9 @@ class FisicaUrbana:
         self.rng.shuffle(candidates)
         for r in candidates:
             points=np.array(r['p'],dtype=float);lengths=np.r_[0,np.cumsum(np.linalg.norm(np.diff(points,axis=0),axis=1))]
-            if lengths[-1]<60:continue
+            if lengths[-1]<60 * self.mapa.get('factor_escala', 1):continue
             if len(self.autos)>=count:break
-            distance=min(8.,lengths[-1]/4);i=int(np.searchsorted(lengths,distance,side='right'));i=min(max(1,i),len(points)-1)
+            distance=min(8. * self.mapa.get('factor_escala', 1),lengths[-1]/4);i=int(np.searchsorted(lengths,distance,side='right'));i=min(max(1,i),len(points)-1)
             a,b=points[i-1],points[i];direction=(b-a)/max(.01,np.linalg.norm(b-a));pos=a+(b-a)*(distance-lengths[i-1])/max(.01,lengths[i]-lengths[i-1]);yaw=math.atan2(direction[1],direction[0])-math.pi/2
             bid=self._auto(pos,yaw,cfg['masa_kg']);p.performCollisionDetection(physicsClientId=self.client)
             blocked=any(pt[2] in set(self.mapa['ids_obstaculos']) for pt in p.getContactPoints(bodyA=bid,physicsClientId=self.client))
@@ -137,21 +139,63 @@ class FisicaUrbana:
         while len(self._sensor_buffer)>1 and self._sensor_buffer[1][0]<=target:self._sensor_buffer.popleft()
         return self._sensor_buffer[0][1].copy()
 
-def crear_escenario(client,config=None):
-    """Fábrica recomendada para el equipo. Devuelve (mapa, opciones físicas)."""
-    from ciudad_pybullet import cargar_ciudad
-    cfg=config or configuracion();sector=cfg.get('sector',{});centro=sector.get('centro_m')
+def escalar_mapa(datos, centro, factor, altura_minima=None):
+    """Transforma el escenario, con el origen en el centro del sector."""
+    def xy(punto):
+        return [(punto[i] - centro[i]) * factor for i in range(2)]
+
+    return {
+        **datos,
+        'buildings': [{**b, 'v': [xy(v) for v in b['v']], 'center': xy(b['center']),
+                       'h': max(b['h'] * factor, altura_minima or 0)}
+                      for b in datos['buildings']],
+        'boundary': [[xy(v) for v in ring] for ring in datos['boundary']],
+        'roads': [{**r, 'p': [xy(v) for v in r['p']], 'width': r['width'] * factor}
+                  for r in datos['roads']],
+        'decor': {
+            **datos['decor'],
+            'trees': [[*xy((x, y)), h * factor, r * factor]
+                      for x, y, h, r in datos['decor']['trees']],
+            'landmark_extras': [{**e, 'p': xy(e['p']), 'h': e['h'] * factor, 'w': e['w'] * factor}
+                                for e in datos['decor']['landmark_extras']],
+        },
+    }
+
+
+def crear_escenario(client, config=None):
+    """Devuelve el mapa y la física usando la escala configurada."""
+    from ciudad_pybullet import cargar_ciudad, CargaPorChunks
+
+    cfg = config or configuracion()
+    sector = cfg.get('sector', {})
+    escala = cfg.get('escala', {})
+    divisor = float(escala.get('divisor', 1))
+    minima = escala.get('altura_minima_edificio_m')
+    if not math.isfinite(divisor) or not 1 <= divisor <= 30:
+        raise ValueError('El divisor debe estar entre 1 y 30')
+    if minima is not None and (not math.isfinite(minima) or minima < 0):
+        raise ValueError('Altura mínima inválida')
+    factor = 1 / divisor
+    datos = json.loads((ROOT / 'ciudad.json').read_text())
+    centro = sector.get('centro_m')
     if centro is None:
-        data=json.loads((ROOT/'ciudad.json').read_text())
-        centro=next(l['p'] for l in data['landmarks'] if l['name']=='Paseo del Buen Pastor')
-    todo=sector.get('cargar_todo',False)
+        centro = next(l['p'] for l in datos['landmarks'] if l['name'] == 'Paseo del Buen Pastor')
+    if factor != 1 or minima is not None:
+        datos = escalar_mapa(datos, centro, factor, minima)
+        centro = [0, 0]
+    todo = sector.get('cargar_todo', False)
     opciones = cfg.get('chunks', {})
+    tamano = float(opciones.get('tamano_m', 50))
+    if not math.isfinite(tamano) or tamano < 5:
+        raise ValueError('El lado real del chunk debe ser de al menos 5 m')
     dinamico = opciones.get('activo', False) and not todo
-    datos = json.loads((ROOT/'ciudad.json').read_text()) if dinamico else None
-    mapa=cargar_ciudad(client,datos={**datos, 'buildings': []} if dinamico else None,centro=None if todo else centro,radio=None if todo else sector.get('radio_m',160),arboles=cfg['arboles']['colisiones'])
+    radio = sector.get('radio_m', 160) * factor
+    mapa = cargar_ciudad(client, datos={**datos, 'buildings': []} if dinamico else datos,
+                         centro=None if todo else centro, radio=None if todo else radio,
+                         arboles=cfg['arboles']['colisiones'])
+    mapa['factor_escala'] = factor
     if dinamico:
-        from ciudad_pybullet import CargaPorChunks
         mapa['datos'] = datos
-        mapa['chunks'] = CargaPorChunks(client, mapa, opciones)
+        mapa['chunks'] = CargaPorChunks(client, mapa, {**opciones, 'tamano_m': tamano * factor})
         mapa['chunks'].actualizar(centro)
-    return mapa,FisicaUrbana(client,mapa,cfg)
+    return mapa, FisicaUrbana(client, mapa, cfg)

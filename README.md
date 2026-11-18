@@ -135,3 +135,9 @@ El CF2X tiene masa de 27 g y cilindro de colisión de 12 cm de diámetro por 2,5
 Escenario aproximado: 7.938 huellas o partes, de las cuales 2.690 intersectan el barrio; no es un conteo verificado de edificios independientes. La mayoría de las alturas son estimadas, el terreno es plano y las fachadas y decoraciones son ilustrativas. No se ha verificado cada construcción ni evaluado la DQN en este mapa.
 
 **Código: [MIT](LICENSE). Datos: [ODbL 1.0 y atribuciones](DATA_LICENSE.md).** Recursos externos: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Procedencia: [docs/MANIFEST.json](docs/MANIFEST.json).
+
+## Escala para comparar con el entorno anterior
+
+En Colab, ajustá `DIVISOR_MAPA` entre 1 y 30. Con 30, el sector se reubica en el origen y 30 m del mapa equivalen a 1 m simulado. Para reproducir el ajuste de alturas de la prueba del equipo, activá también `ALTURA_MINIMA_2_2_M`. Los equivalentes en JSON están en `escala.divisor` y `escala.altura_minima_edificio_m`. La escala aplica a la geometría del mapa. El CF2X, los sensores y las velocidades configuradas se expresan en unidades de simulación. En sectores reducidos conviene empezar con autos apagados por su tamaño físico.
+
+El [recorte del Buen Pastor](docs/REVISION_BUEN_PASTOR.md) reúne las huellas para revisión con ortofoto.
