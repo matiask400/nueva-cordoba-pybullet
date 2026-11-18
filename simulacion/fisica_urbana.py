@@ -27,15 +27,47 @@ class FisicaUrbana:
         ang=math.radians(c['direccion_grados']);mean=np.array([math.cos(ang),math.sin(ang),0])*speed
         return mean+self.rafaga*speed*c['intensidad_rafagas']
 
+    @property
+    def ids_obstaculos(self):
+        return self.mapa['ids_obstaculos'] + self.ids_vehiculos
+
+    def viento_local(self, posicion):
+        """Atenúa el viento a sotavento según rayos contra edificios a la altura del dron."""
+        viento = self.viento_en(posicion[2])
+        cfg = self.config['viento'].get('efecto_edificios', {})
+        velocidad = np.linalg.norm(viento[:2])
+        if not cfg.get('activo', False) or velocidad < 1e-6:
+            return viento
+        alcance = float(cfg.get('alcance_m', 30))
+        reduccion = float(cfg.get('reduccion_maxima', .65))
+        if not math.isfinite(alcance) or alcance <= .15 or not 0 <= reduccion <= 1:
+            raise ValueError('Configuración inválida del viento urbano')
+        direccion = viento[:2] / velocidad
+        lateral = np.array([-direccion[1], direccion[0]])
+        origen = np.asarray(posicion, dtype=float)
+        rayos = []
+        for offset in (0., -.22, .22):
+            rumbo = np.r_[-direccion + offset * lateral, 0.]
+            rumbo /= np.linalg.norm(rumbo)
+            rayos.append((origen + .15 * rumbo, origen + alcance * rumbo))
+        impactos = p.rayTestBatch([a.tolist() for a,b in rayos],
+                                  [b.tolist() for a,b in rayos], physicsClientId=self.client)
+        edificios = set(self.mapa['ids_edificios'])
+        abrigo = sum((1 - r[2]) ** 2 for r in impactos if r[0] in edificios) / len(rayos)
+        return viento * (1 - reduccion * abrigo)
+
     def aplicar(self,dt,dron_id=None):
         if dt<=0:raise ValueError('dt debe ser positivo')
+        pos = p.getBasePositionAndOrientation(dron_id,physicsClientId=self.client)[0] if dron_id is not None else None
+        chunks = self.mapa.get('chunks')
+        if chunks is not None and pos is not None:
+            chunks.actualizar(pos)
         self.tiempo+=dt;c=self.config['viento']
         if c['activo']:
             alpha=math.exp(-dt/c['tiempo_correlacion_s'])
             self.rafaga=alpha*self.rafaga+math.sqrt(1-alpha**2)*self.rng.normal(size=3)*np.array([1,1,.25])
             if dron_id is not None:
-                pos=p.getBasePositionAndOrientation(dron_id,physicsClientId=self.client)[0]
-                vel=np.array(p.getBaseVelocity(dron_id,physicsClientId=self.client)[0]);wind=self.viento_en(pos[2]);rel=wind-vel
+                vel=np.array(p.getBaseVelocity(dron_id,physicsClientId=self.client)[0]);wind=self.viento_local(pos);rel=wind-vel
                 force=.5*c['densidad_aire_kg_m3']*c['cd_area_m2']*np.linalg.norm(rel)*rel
                 norm=np.linalg.norm(force);limit=c['fuerza_maxima_N']
                 if limit<=0:raise ValueError('La fuerza máxima debe ser positiva')
@@ -113,5 +145,13 @@ def crear_escenario(client,config=None):
         data=json.loads((ROOT/'ciudad.json').read_text())
         centro=next(l['p'] for l in data['landmarks'] if l['name']=='Paseo del Buen Pastor')
     todo=sector.get('cargar_todo',False)
-    mapa=cargar_ciudad(client,centro=None if todo else centro,radio=None if todo else sector.get('radio_m',160),arboles=cfg['arboles']['colisiones'])
+    opciones = cfg.get('chunks', {})
+    dinamico = opciones.get('activo', False) and not todo
+    datos = json.loads((ROOT/'ciudad.json').read_text()) if dinamico else None
+    mapa=cargar_ciudad(client,datos={**datos, 'buildings': []} if dinamico else None,centro=None if todo else centro,radio=None if todo else sector.get('radio_m',160),arboles=cfg['arboles']['colisiones'])
+    if dinamico:
+        from ciudad_pybullet import CargaPorChunks
+        mapa['datos'] = datos
+        mapa['chunks'] = CargaPorChunks(client, mapa, opciones)
+        mapa['chunks'].actualizar(centro)
     return mapa,FisicaUrbana(client,mapa,cfg)

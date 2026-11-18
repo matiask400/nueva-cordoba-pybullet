@@ -10,7 +10,12 @@
     "tiempo_correlacion_s": 2,
     "densidad_aire_kg_m3": 1.225,
     "cd_area_m2": 0.003,
-    "fuerza_maxima_N": 0.12
+    "fuerza_maxima_N": 0.12,
+    "efecto_edificios": {
+      "activo": false,
+      "alcance_m": 30,
+      "reduccion_maxima": 0.65
+    }
   },
   "vehiculos": {
     "activos": false,
@@ -36,5 +41,11 @@
     "cargar_todo": false,
     "centro_m": null,
     "radio_m": 160
+  },
+  "chunks": {
+    "activo": false,
+    "tamano_m": 50,
+    "radio_chunks": 2,
+    "retencion_chunks": 1
   }
 }

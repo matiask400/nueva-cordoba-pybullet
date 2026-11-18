@@ -58,11 +58,25 @@ La notebook utiliza los otros seis archivos de `simulacion/`. No son siete progr
 
 Editar [`simulacion/configuracion.json`](simulacion/configuracion.json), o usar las opciones de la notebook. Desde el visor también se puede guardar esta misma configuración con el botón ⚙ y el servidor local.
 
-- Viento simplificado: activación, dirección, velocidad, ráfagas y aumento con la altura. Los edificios todavía no desvían ni bloquean el viento.
+- Viento simplificado: activación, dirección, velocidad, ráfagas y aumento con la altura. Activá también `viento.efecto_edificios.activo` para reducir el viento detrás de edificios cercanos.
 - Autos físicos: activación, cantidad, masa y velocidad.
 - Árboles: colisión opcional del arbolado ilustrativo.
 - Sensores: ruido y latencia opcionales.
 - Sector activo: centro y radio; 160 m es el valor inicial. Cargar toda la ciudad con física puede ser lento.
+
+Con `chunks.activo`, PyBullet carga edificios en una cuadrícula que sigue al dron.
+`tamano_m` fija el lado de cada celda, `radio_chunks` cuenta las celdas vecinas en cada dirección y
+`retencion_chunks` mantiene un anillo extra para evitar recargas al cruzar bordes.
+Usá `mundo.aplicar(..., dron_id)` para actualizar la ventana durante el vuelo y consultá
+`mundo.ids_obstaculos` en cada lectura. La opción de ciudad completa tiene prioridad.
+El suelo, los autos, los árboles y los adornos no se cargan por chunks. La carga inicial toma
+el centro configurado hasta recibir la posición del dron.
+
+El viento urbano usa tres rayos hacia el origen del viento a la altura del dron. Cuanto más cerca
+está la fachada que lo protege, más baja la fuerza del viento. Por encima del techo desaparece
+esa protección. Esta aproximación modela abrigo y requiere que la fachada esté cargada.
+Para un alcance de 30 m, usá celdas de 50 m y un radio de al menos 1 chunk.
+Ambas opciones nuevas arrancan apagadas y se pueden activar desde Colab o el JSON.
 
 Los cambios físicos se aplican al iniciar o reiniciar PyBullet. Los autos del visor son decorativos; los autos físicos se crean en PyBullet.
 
@@ -86,7 +100,7 @@ Después de ejecutar las celdas de carga de archivos de la notebook, la ruta de 
 from fisica_urbana import configuracion, crear_escenario
 cfg = configuracion()
 mapa, mundo = crear_escenario(env.CLIENT, cfg)
-ids_obstaculos = mapa['ids_obstaculos'] + mundo.ids_vehiculos
+ids_obstaculos = mundo.ids_obstaculos  # consultar en cada lectura de sensores o contactos
 ```
 
 Reemplazar la generación de edificios artificiales por esta carga y recrearla después de cada reinicio de PyBullet. Aplicar `mundo.aplicar(1 / self.PYB_FREQ, dron_id)` en cada subpaso físico, además de las fuerzas de los motores. El responsable del agente debe revisar inicio/destino, límites, duración y observaciones antes de cargar su checkpoint. Ver la [guía técnica](docs/GUIA_TECNICA.md).

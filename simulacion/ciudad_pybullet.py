@@ -3,7 +3,7 @@ from pathlib import Path
 import json,math
 ROOT=Path(__file__).resolve().parent
 
-def cargar_ciudad(client, archivo=None, centro=None, radio=None, visual=True, arboles=False, extras=True, modo_colision='prismas'):
+def cargar_ciudad(client, archivo=None, centro=None, radio=None, visual=True, arboles=False, extras=True, modo_colision='prismas', *, datos=None, suelo=True):
     """Carga cuerpos estáticos. Devuelve IDs, relación con edificios y límites.
 
     centro/radio opcionales permiten cargar un sector circular sin cambiar escala.
@@ -12,7 +12,7 @@ def cargar_ciudad(client, archivo=None, centro=None, radio=None, visual=True, ar
     """
     import pybullet as p
     if modo_colision not in ['prismas','malla']:raise ValueError('Modo de colisión desconocido')
-    data=json.loads(Path(archivo or ROOT/'ciudad.json').read_text())
+    data=datos if datos is not None else json.loads(Path(archivo or ROOT/'ciudad.json').read_text())
     ids=[];buildings=[]
     for b in data['buildings']:
         if centro is not None and radio is not None:
@@ -55,11 +55,13 @@ def cargar_ciudad(client, archivo=None, centro=None, radio=None, visual=True, ar
             linkInertialFrameOrientations=[[0,0,0,1]]*count,linkParentIndices=[0]*count,
             linkJointTypes=[p.JOINT_FIXED]*count,linkJointAxis=[[0,0,0]]*count,physicsClientId=client)
         ids.append(body);buildings.append(b)
-    allx=[p[0] for line in data['boundary'] for p in line];ally=[p[1] for line in data['boundary'] for p in line]
-    half=[(max(allx)-min(allx))/2+500,(max(ally)-min(ally))/2+500,.1];center=[(max(allx)+min(allx))/2,(max(ally)+min(ally))/2,-.1]
-    col=p.createCollisionShape(p.GEOM_BOX,halfExtents=half,physicsClientId=client)
-    vis=p.createVisualShape(p.GEOM_BOX,halfExtents=half,rgbaColor=[.4,.47,.34,1],physicsClientId=client) if visual else -1
-    ground=p.createMultiBody(baseMass=0,baseCollisionShapeIndex=col,baseVisualShapeIndex=vis,basePosition=center,physicsClientId=client)
+    ground=None
+    if suelo:
+        allx=[p[0] for line in data['boundary'] for p in line];ally=[p[1] for line in data['boundary'] for p in line]
+        half=[(max(allx)-min(allx))/2+500,(max(ally)-min(ally))/2+500,.1];center=[(max(allx)+min(allx))/2,(max(ally)+min(ally))/2,-.1]
+        col=p.createCollisionShape(p.GEOM_BOX,halfExtents=half,physicsClientId=client)
+        vis=p.createVisualShape(p.GEOM_BOX,halfExtents=half,rgbaColor=[.4,.47,.34,1],physicsClientId=client) if visual else -1
+        ground=p.createMultiBody(baseMass=0,baseCollisionShapeIndex=col,baseVisualShapeIndex=vis,basePosition=center,physicsClientId=client)
     extra_ids=[];tree_ids=[]
     if extras:
         for e in data['decor']['landmark_extras']:
@@ -94,3 +96,58 @@ if __name__=='__main__':
     c=p.connect(p.GUI);m=cargar_ciudad(c)
     p.resetDebugVisualizerCamera(1800,30,-50,[0,0,0],physicsClientId=c)
     while p.isConnected(c):time.sleep(.05)
+
+
+class CargaPorChunks:
+    """Mantiene edificios cercanos y un anillo extra para evitar recargas en bordes."""
+
+    def __init__(self, client, mapa, opciones):
+        from collections import defaultdict
+
+        self.client = client
+        self.mapa = mapa
+        self.tamano = float(opciones.get('tamano_m', 50))
+        self.radio = int(opciones.get('radio_chunks', 2))
+        self.retencion = int(opciones.get('retencion_chunks', 1))
+        if not math.isfinite(self.tamano) or self.tamano < 5 or not 0 <= self.radio <= 10 or not 0 <= self.retencion <= 5:
+            raise ValueError('Configuración inválida de chunks')
+        self.indice = defaultdict(set)
+        self.cargados = {}
+        self.centro = None
+        for i, edificio in enumerate(mapa['datos']['buildings']):
+            xs, ys = zip(*edificio['v'])
+            x0, y0 = self.celda((min(xs), min(ys)))
+            x1, y1 = self.celda((max(xs), max(ys)))
+            for x in range(x0, x1 + 1):
+                for y in range(y0, y1 + 1):
+                    self.indice[x, y].add(i)
+
+    def celda(self, posicion):
+        return tuple(math.floor(float(v) / self.tamano) for v in posicion[:2])
+
+    def indices(self, centro, radio):
+        x, y = centro
+        return set().union(*(self.indice.get((i, j), ()) for i in range(x-radio, x+radio+1)
+                             for j in range(y-radio, y+radio+1)))
+
+    def actualizar(self, posicion):
+        import pybullet as p
+
+        centro = self.celda(posicion)
+        if centro == self.centro:
+            return
+        destino = self.indices(centro, self.radio)
+        conservar = self.indices(centro, self.radio + self.retencion)
+        edificios = self.mapa['datos']['buildings']
+        nuevos = sorted(destino - self.cargados.keys())
+        if nuevos:
+            lote = cargar_ciudad(self.client, datos={**self.mapa['datos'],
+                'buildings': [edificios[i] for i in nuevos]}, suelo=False, extras=False)
+            self.cargados.update(zip(nuevos, lote['ids_edificios']))
+        for i in self.cargados.keys() - conservar:
+            p.removeBody(self.cargados.pop(i), physicsClientId=self.client)
+        self.mapa['ids_edificios'][:] = self.cargados.values()
+        self.mapa['edificios'][:] = [edificios[i] for i in self.cargados]
+        self.mapa['ids_obstaculos'][:] = [
+            *self.mapa['ids_edificios'], *self.mapa['ids_extras'], *self.mapa['ids_arboles']]
+        self.centro = centro
