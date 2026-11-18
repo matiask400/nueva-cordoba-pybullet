@@ -97,7 +97,9 @@ Los cambios físicos se aplican al iniciar o reiniciar PyBullet. Los autos del v
 
 ## Ver el mapa en el navegador
 
-Abrí [`visor/index.html`](visor/index.html) después de descargar y extraer el repositorio. Para guardar configuración e imágenes en sus carpetas, ejecutar desde la raíz:
+1) Aqui: [Link](https://matiask400.github.io/nueva-cordoba-pybullet/visor/)
+
+2) Abrí [`visor/index.html`](visor/index.html) después de descargar y extraer el repositorio. Para guardar configuración e imágenes en sus carpetas, ejecutar desde la raíz:
 
 ```bash
 python3 visor/abrir_visor.py
