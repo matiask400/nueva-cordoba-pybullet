@@ -22,7 +22,7 @@
     "cf2.dae": "8db98d6393bbf672f01a8d3af6ff5ac42b9e85f6ee3e3e2d2c53801e823b3a35"
   },
   "repositorio": "https://github.com/matiask400/nueva-cordoba-pybullet",
-  "privacidad_verificada": "private",
+  "privacidad_verificada": "public",
   "notebook_colab": {
     "estado": "OK",
     "construcciones": 146,

@@ -6,7 +6,7 @@ Repositorio: https://github.com/matiask400/nueva-cordoba-pybullet
 
 Escenario urbano configurable para probar drones en **Nueva Córdoba, Argentina**, con geometría a escala real, colisiones, sensores, viento y vehículos físicos. Incluye visor 3D y notebook de Google Colab.
 
-**Privacidad:** repositorio privado.
+**Acceso:** repositorio público.
 
 **Estado:** escenario de simulación; no incluye pesos de una DQN ni demuestra navegación autónoma. Las alturas y muchas decoraciones son estimadas. El detalle técnico y las limitaciones están en [LEEME.md](LEEME.md).
 
@@ -94,7 +94,7 @@ La prueba dinámica usa un **sector** para mantener el costo de simulación acot
 
 ## Compartir y usar en equipo
 
-El repositorio permanece **privado**. Cada integrante debe tener acceso autorizado en GitHub para descargarlo. El botón de Colab puede pedir autorización a GitHub; si no abre el repositorio privado, seguí los pasos de carga del ZIP de arriba. No hacen falta tokens dentro del notebook.
+El repositorio es **público**. El equipo puede abrir el botón de Colab y descargar los archivos sin solicitar acceso a GitHub. No hacen falta tokens dentro del notebook.
 
 1. Descargar **Code → Download ZIP** desde GitHub.
 2. Abrir `Mapa_Nueva_Cordoba_Colab.ipynb` en Colab.
