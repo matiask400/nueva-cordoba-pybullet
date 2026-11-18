@@ -6,6 +6,21 @@ Mapa urbano a escala real para probar el CF2X en PyBullet, con colisiones, senso
 
 Repositorio público: https://github.com/matiask400/nueva-cordoba-pybullet
 
+## Funcionalidades
+
+| Funcionalidad | Qué incluye |
+|---|---|
+| Mapa urbano a escala real | Huellas de edificios, patios, calles, parques y lugares de referencia de Nueva Córdoba. |
+| Dron CF2X en PyBullet | Modelo físico del Crazyflie con masa de 27 g, colisiones con suelo y edificios y ocho sensores horizontales de distancia. |
+| Carga del escenario | Sector fijo, ciudad completa o carga de edificios por chunks que siguen al dron. Se pueden ajustar el tamaño, el radio y la retención de los chunks. |
+| Viento configurable | Fuerza sobre el dron, ráfagas reproducibles y variación con la altura. El abrigo opcional de edificios reduce el viento detrás de fachadas cercanas. |
+| Vehículos y árboles | Autos opcionales con masa, ruedas motorizadas y colisiones. El arbolado ilustrativo también puede tener colisión. |
+| Sensores configurables | Ruido y latencia opcionales para las lecturas de distancia. |
+| Visor 3D | Vista aérea y a nivel de calle, recorrido por lugares, minimapa, modo día/noche, sombras, vegetación, tránsito visual e inspección de fuentes y alturas. |
+| Exportaciones y pruebas | GeoJSON para GIS, GLB para Blender, notebook de demostración, informes y un script de verificación. |
+
+El viento, el abrigo de edificios, los autos físicos, las colisiones de árboles y la carga por chunks se activan por separado. El ruido y la latencia empiezan en cero. Las opciones físicas se aplican en PyBullet. Para probar la DQN del equipo en el escenario, hace falta integrar su entorno y cargar su checkpoint.
+
 ## Usarlo en Colab — cinco pasos
 
 1. Tocá **Abrir en Colab** arriba. No hace falta GPU.
