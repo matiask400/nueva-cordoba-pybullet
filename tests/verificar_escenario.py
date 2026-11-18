@@ -1,8 +1,8 @@
 from pathlib import Path
 import sys,os
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT))
-os.chdir(ROOT)
+sys.path.insert(0,str(ROOT/'simulacion'))
+os.chdir(ROOT/'validacion')
 import json,time,math,platform,xml.etree.ElementTree as ET
 from pathlib import Path
 from collections import Counter

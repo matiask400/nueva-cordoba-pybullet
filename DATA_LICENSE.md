@@ -3,7 +3,7 @@
 La base geográfica consolidada derivada de OpenStreetMap se distribuye bajo **Open Data Commons Open Database License 1.0 (ODbL-1.0)**:
 https://opendatacommons.org/licenses/odbl/1-0/
 
-Esto se aplica a `ciudad.json`, `ciudad.js`, `edificios.geojson` y los datos geográficos derivados de ellos. Los modelos derivados, como `nueva_cordoba_lod1.glb`, conservan la atribución de sus fuentes. La licencia MIT del código no sustituye las licencias de los datos o recursos de terceros.
+Esto se aplica a `simulacion/ciudad.json`, `visor/ciudad.js`, `exportaciones/edificios.geojson` y los datos geográficos derivados de ellos. Los modelos derivados, como `exportaciones/nueva_cordoba_lod1.glb`, conservan la atribución de sus fuentes. La licencia MIT del código no sustituye las licencias de los datos o recursos de terceros.
 
 Atribución visible: **© OpenStreetMap contributors, Overture Maps Foundation, Microsoft y las fuentes identificadas en los registros.**
 

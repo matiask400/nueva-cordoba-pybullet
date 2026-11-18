@@ -2,15 +2,19 @@
 
 Reconstrucción 3D aproximada del barrio y su contexto, en metros reales. La escena contiene 7.938 huellas o partes de construcciones; 2.690 intersectan el perímetro municipal de Nueva Córdoba. No equivale a un inventario de 7.938 edificios independientes: una construcción puede estar formada por varias partes. La escena es una interpretación visual inspirada en ciudades de videojuegos, no una reproducción fotográfica de GTA.
 
+## Organización
+
+Los archivos de PyBullet y Colab están en `simulacion/`; los del navegador, en `visor/`. La configuración física canónica es `simulacion/configuracion.json`. El servidor del visor guarda ahí y actualiza su copia visual `visor/configuracion.js`. Las exportaciones están en `exportaciones/`, los informes en `validacion/` y las imágenes en `docs/imagenes/`.
+
 ## Abrir el mapa
 
-Extraer todo el ZIP y abrir index.html en Chrome, Edge o Firefox con WebGL. No necesita instalación ni cuenta. Para guardar las configuraciones directamente en la carpeta, ejecutar `python3 abrir_visor.py` y abrir http://127.0.0.1:8766 . Cerrar con Ctrl+C. Las tipografías y bibliotecas están incluidas para uso sin Internet.
+Extraer todo el ZIP y abrir visor/index.html en Chrome, Edge o Firefox con WebGL. No necesita instalación ni cuenta. Para guardar las configuraciones directamente en la carpeta, ejecutar `python3 visor/abrir_visor.py` y abrir http://127.0.0.1:8766 . Cerrar con Ctrl+C. Las tipografías y bibliotecas están incluidas para uso sin Internet.
 
 Controles: arrastrar para orbitar, rueda para acercar, botón derecho para desplazar. W/A/S/D para recorrer, Q/E para altura y Shift para acelerar. H oculta la interfaz. Los botones de lugares llevan a hitos reales de OSM. El visor tiene controles de vegetación, tránsito visual, fuentes, día/noche y configuración. La cámara no tiene colisiones ni ejecuta la DQN. El recorrido automático es de cámara, no de un agente entrenado.
 
 ## Realismo configurable
 
-El botón ⚙ permite cambiar las opciones y guardarlas en configuracion.json (y en configuracion.js para el visor). Si se abre index.html como archivo, el navegador descarga el JSON: reemplazar manualmente el de la carpeta antes de iniciar PyBullet. Si se usa abrir_visor.py, el guardado es automático.
+El botón ⚙ guarda las opciones en simulacion/configuracion.json. Con el servidor local, el visor lee ese archivo directamente y mantiene una copia visual para uso sin servidor. Si se abre visor/index.html como archivo, el navegador descarga el JSON: reemplazar simulacion/configuracion.json antes de iniciar PyBullet. Con python3 visor/abrir_visor.py el guardado es automático.
 
 - Viento: activa fuerzas aerodinámicas sobre el dron; velocidad media según altura, dirección y ráfagas correlacionadas aleatorias. El perfil usa u(z)=u_ref·(max(z,0.3)/z_ref)^alpha. No modela CFD, efecto de cañón urbano ni turbulencia detrás de cada edificio. Las fuerzas usan velocidad relativa y arrastre cuadrático, con un límite configurable para evitar valores extremos.
 - Autos físicos: chasis con masa, ruedas con colisión, motores y control simplificado de dirección por torque; siguen segmentos de calles y se detienen al llegar al extremo. No son una simulación completa de tránsito ni de neumáticos. No hay semáforos ni conductor inteligente para resolver todas las intersecciones. Los autos decorativos del visor no son estos cuerpos físicos.
@@ -27,6 +31,10 @@ Instalar pybullet y numpy. El módulo ciudad_pybullet.py ofrece cargar_ciudad(cl
 Ejemplo mínimo de integración (el control de vuelo corresponde al entorno del equipo):
 
 ```python
+import sys
+from pathlib import Path
+# Ejecutar desde la raíz del repositorio; en Colab usar carpeta_mapa.
+sys.path.insert(0, str(Path.cwd() / 'simulacion'))
 import pybullet as p
 from ciudad_pybullet import cargar_ciudad, cargar_dron
 from fisica_urbana import FisicaUrbana, configuracion
@@ -71,11 +79,12 @@ El terreno es plano. Se conservan calles, parques y patios: los espacios abierto
 
 ## Otros archivos
 
-- edificios.geojson: huellas georreferenciadas y procedencia por geometría.
-- nueva_cordoba_lod1.glb: geometría LoD1 de edificios para Blender/motores 3D, en metros. No incluye texturas ni decoraciones del visor.
-- cobertura_cartografica.png: plano de fuentes y límite barrial.
-- sectores_a_revisar.geojson: resultado de la detección automática de grandes sectores sin huellas; no sustituye un control humano.
-- resultado_ciudad.json: informe de pruebas, cuando se adjunte tras finalizar Kaggle.
+- exportaciones/edificios.geojson: huellas georreferenciadas y procedencia por geometría.
+- exportaciones/nueva_cordoba_lod1.glb: geometría LoD1 de edificios para Blender/motores 3D, en metros. No incluye texturas ni decoraciones del visor.
+- docs/imagenes/cobertura_cartografica.png: plano de fuentes y límite barrial.
+- exportaciones/sectores_a_revisar.geojson: resultado de la detección automática de grandes sectores sin huellas; no sustituye un control humano.
+- validacion/resultado_ciudad.json: informe de las pruebas físicas completadas en Kaggle.
+- validacion/resultado_colab.json: comprobación de las celdas computacionales de la notebook.
 
 ## Fuentes y atribución
 
