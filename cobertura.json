@@ -1,0 +1,26 @@
+{
+  "edificios_total": 7938,
+  "edificios_barrio": 2690,
+  "fuentes": {
+    "OpenStreetMap": 823,
+    "Overture Maps": 6313,
+    "Microsoft Global ML Building Footprints": 802
+  },
+  "fuentes_altura": {
+    "pisos_osm_3m": 280,
+    "estimada_vecindad": 6064,
+    "supuesto_15m": 1554,
+    "height_osm": 40
+  },
+  "calles": 1282,
+  "superficies": 180,
+  "lugares": 544,
+  "hitos": 8,
+  "descartados": {
+    "overture_duplicado": 796,
+    "microsoft_duplicado": 2409
+  },
+  "completitud_verificada": false,
+  "manzanas_sin_huellas_a_revisar": 0,
+  "geometria_validada": true
+}

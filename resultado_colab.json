@@ -1,0 +1,9 @@
+{
+  "estado": "OK",
+  "construcciones": 146,
+  "masa_kg": 0.027,
+  "contactos": 4,
+  "sensores": 8,
+  "entrada_zip_interactiva_probada": false,
+  "motor": "Kaggle Linux, celdas computacionales de Colab"
+}

@@ -1,0 +1,35 @@
+{
+  "version": "0.1.0",
+  "alcance": "Escenario aproximado; no evaluación DQN",
+  "fuentes": {
+    "osm": "https://www.openstreetmap.org/api/0.6/map?bbox=-64.197,-31.441,-64.173,-31.417",
+    "overture": "Cliente oficial overturemaps 2.1.1, catálogo STAC, tipo building",
+    "microsoft": "https://bfppub.z5.web.core.windows.net/2026-08-13/global-buildings.geojsonl/RegionName=Argentina/quadkey=210302322/part-00026-110f5303-ff85-4c71-a2bf-c6070024fec8.c000.csv.gz",
+    "limites": "https://github.com/OpenDataCordoba/barrios"
+  },
+  "pruebas": {
+    "motor": "https://www.kaggle.com/code/matiasss/nueva-cordoba-ciudad-cf2x",
+    "version": 5,
+    "estado": "OK",
+    "dinamica": "Sector 160 m, 174 partes de edificios",
+    "estatica": "7938 partes, rayos y contactos"
+  },
+  "sha256": {
+    "ciudad.json": "ce555b48381d79f8b4ae2303f67011d0ca4c258599b1e08a1f040bea89e800bb",
+    "ciudad_pybullet.py": "424b7dbd565253646da3ec452fcc141af146f54efd53fab2d62b7020f62448dd",
+    "fisica_urbana.py": "98b84edc9b430cea88ba3bbd86f44b7cfbf0f1b2a4eb342b0d2f23ad63b3db46",
+    "cf2x.urdf": "81494018056df2995351da62b9365d2ef4e1512112feaf73e88f9203e20c884b",
+    "cf2.dae": "8db98d6393bbf672f01a8d3af6ff5ac42b9e85f6ee3e3e2d2c53801e823b3a35"
+  },
+  "repositorio": "https://github.com/matiask400/nueva-cordoba-pybullet",
+  "privacidad_verificada": "private",
+  "notebook_colab": {
+    "estado": "OK",
+    "construcciones": 146,
+    "masa_kg": 0.027,
+    "contactos": 4,
+    "sensores": 8,
+    "entrada_zip_interactiva_probada": false,
+    "motor": "Kaggle Linux, celdas computacionales de Colab"
+  }
+}

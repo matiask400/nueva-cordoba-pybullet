@@ -1,0 +1,57 @@
+{
+  "estado": "OK",
+  "edificios_cargados": 7938,
+  "rayos_techo_ok": 7938,
+  "rayos_fachada_ok": 7938,
+  "contactos_cf2x_ok": 7938,
+  "fallos": [],
+  "python": "3.13.18",
+  "dron": "CF2X oficial",
+  "masa_kg": 0.027,
+  "aabb_dron_m": [
+    0.124,
+    0.124,
+    0.028999999999996362
+  ],
+  "dqn_evaluada": false,
+  "arboles_procedurales_en_colision": false,
+  "edificios_sector_dinamico": 174,
+  "radio_sector_m": 160,
+  "modo_estatico": "malla",
+  "modo_dinamico": "prismas convexos",
+  "altura_final_cf2x": 105.01448978195683,
+  "altura_techo_dinamico": 105.0,
+  "velocidad_final_cf2x": [
+    -1.4507594954962668e-07,
+    -1.6143664494379481e-09,
+    1.8283985436795547e-13
+  ],
+  "contactos_finales_cf2x": 4,
+  "apoyo_dinamico_cf2x_ok": true,
+  "sensores_espacio_libre_ok": true,
+  "opciones_apagadas_ok": true,
+  "viento_crece_con_altura_ok": true,
+  "viento_reproducible_ok": true,
+  "viento_rafagas_ok": true,
+  "viento_fuerza_aplicada_N": [
+    0.02324055472154446,
+    0.019593059033067704,
+    0.003176195525400061
+  ],
+  "viento_desplaza_cf2x_ok": true,
+  "autos_creados": 2,
+  "autos_recorrido_m": [
+    2.3485486524070263,
+    2.360092632861694
+  ],
+  "autos_fisica_ok": true,
+  "autos_masas_kg": [
+    1000.0,
+    1000.0
+  ],
+  "auto_colision_cf2x_ok": true,
+  "latencia_sensor_ok": true,
+  "ruido_sensor_ok": true,
+  "segundos": 11.85,
+  "cantidad_fallos": 0
+}

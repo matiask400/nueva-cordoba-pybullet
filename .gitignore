@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.venv*/
+.env
+.env.*
+.kaggle/
+kaggle.json
+access_token
+.ipynb_checkpoints/
+results_local/
