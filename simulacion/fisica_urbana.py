@@ -144,8 +144,18 @@ def escalar_mapa(datos, centro, factor, altura_minima=None):
     def xy(punto):
         return [(punto[i] - centro[i]) * factor for i in range(2)]
 
+    meta = dict(datos['meta'])
+    referencia = meta.get('roof_reference')
+    if referencia:
+        ox, oy = meta['origin_utm']
+        oeste, sur, este, norte = referencia['bounds_utm']
+        meta['roof_coordinates'] = ([0, 0], [
+            *xy((oeste - ox, sur - oy)), *xy((este - ox, norte - oy)),
+        ])
+
     return {
         **datos,
+        'meta': meta,
         'buildings': [{**b, 'v': [xy(v) for v in b['v']], 'center': xy(b['center']),
                        'h': max(b['h'] * factor, altura_minima or 0)}
                       for b in datos['buildings']],
@@ -177,6 +187,8 @@ def crear_escenario(client, config=None):
         raise ValueError('Altura mínima inválida')
     factor = 1 / divisor
     datos = json.loads((ROOT / 'ciudad.json').read_text())
+    if not cfg.get('visual', {}).get('texturas_techos', True):
+        datos['meta'].pop('roof_reference', None)
     centro = sector.get('centro_m')
     if centro is None:
         centro = next(l['p'] for l in datos['landmarks'] if l['name'] == 'Paseo del Buen Pastor')

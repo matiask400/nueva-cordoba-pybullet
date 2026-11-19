@@ -1,7 +1,22 @@
 """Geometría de Nueva Córdoba en metros reales: sin dependencia del visor web."""
 from pathlib import Path
 import json,math
+from tempfile import TemporaryDirectory
 ROOT=Path(__file__).resolve().parent
+
+def _techo_texturizado(p, client, edificio, vertices, origen, limites):
+    """Crea la malla visual con UV geográficas. La colisión usa su malla original."""
+    oeste, sur, este, norte = limites
+    n = len(edificio['v'])
+    posiciones = [f'v {x} {y} {z}\n' for x, y, z in vertices[n:]]
+    uv = [f'vt {(x+origen[0]-oeste)/(este-oeste)} {(y+origen[1]-sur)/(norte-sur)}\n'
+          for x, y in edificio['v']]
+    caras = ['f ' + ' '.join(f'{i+1}/{i+1}/1' for i in tri) + '\n'
+             for tri in edificio['tri']]
+    with TemporaryDirectory(prefix='nc-techo-') as carpeta:
+        malla = Path(carpeta) / 'techo.obj'
+        malla.write_text(''.join(posiciones + uv + ['vn 0 0 1\n'] + caras), encoding='ascii')
+        return p.createVisualShape(p.GEOM_MESH, fileName=str(malla), physicsClientId=client)
 
 def cargar_ciudad(client, archivo=None, centro=None, radio=None, visual=True, arboles=False, extras=True, modo_colision='prismas', *, datos=None, suelo=True):
     """Carga cuerpos estáticos. Devuelve IDs, relación con edificios y límites.
@@ -14,6 +29,13 @@ def cargar_ciudad(client, archivo=None, centro=None, radio=None, visual=True, ar
     if modo_colision not in ['prismas','malla']:raise ValueError('Modo de colisión desconocido')
     data=datos if datos is not None else json.loads(Path(archivo or ROOT/'ciudad.json').read_text())
     ids=[];buildings=[]
+    meta = data.get('meta', {})
+    referencia = meta.get('roof_reference')
+    coordenadas_techo = meta.get('roof_coordinates')
+    if coordenadas_techo is None and referencia:
+        coordenadas_techo = (meta['origin_utm'], referencia['bounds_utm'])
+    textura = ROOT / 'texturas' / 'buen-pastor-2021.jpg'
+    textura_id = None
     for b in data['buildings']:
         if centro is not None and radio is not None:
             # Distancia a caja de huella; no descarta edificios largos que intersectan el sector.
@@ -44,16 +66,42 @@ def cargar_ciudad(client, archivo=None, centro=None, radio=None, visual=True, ar
             for points in parts:collision_parts.append(p.createCollisionShape(p.GEOM_MESH,vertices=points,physicsClientId=client))
         col=collision_parts[0]
         vis=-1
+        roof_vis=-1
         if visual:
             v=sum(ord(c) for c in b['id'])%5;palette=[[.72,.69,.61,1],[.63,.66,.62,1],[.76,.71,.60,1],[.59,.63,.65,1],[.69,.63,.54,1]]
-            vis=p.createVisualShape(p.GEOM_MESH,vertices=vertices,indices=indices,rgbaColor=palette[v],physicsClientId=client)
-        extra=collision_parts[1:];count=len(extra)
+            visual_indices = indices
+            if 'roof_rgb' in b:
+                roof_indices = [i+n for tri in b['tri'] for i in tri]
+                if coordenadas_techo and textura.is_file():
+                    if textura_id is None:
+                        textura_id = p.loadTexture(str(textura), physicsClientId=client)
+                    if textura_id >= 0:
+                        roof_vis = _techo_texturizado(
+                            p, client, b, vertices, *coordenadas_techo)
+                if roof_vis == -1:
+                    roof_vis = p.createVisualShape(
+                        p.GEOM_MESH, vertices=vertices, indices=roof_indices,
+                        rgbaColor=[channel/255 for channel in b['roof_rgb']]+[1],
+                        physicsClientId=client)
+                wall_start = 2*len(b['tri'])
+                wall_and_floor = faces[:wall_start:2] + faces[wall_start:]
+                visual_indices = [i for face in wall_and_floor for i in face]
+            vis=p.createVisualShape(p.GEOM_MESH,vertices=vertices,indices=visual_indices,rgbaColor=palette[v],physicsClientId=client)
+        extra=collision_parts[1:]
+        if roof_vis != -1 and not extra:
+            extra.append(-1)
+        count=len(extra)
+        link_visuals = [-1]*count
+        if roof_vis != -1:
+            link_visuals[0] = roof_vis
         body=p.createMultiBody(baseMass=0,baseCollisionShapeIndex=col,baseVisualShapeIndex=vis,
             basePosition=[cx,cy,cz],linkMasses=[0]*count,linkCollisionShapeIndices=extra,
-            linkVisualShapeIndices=[-1]*count,linkPositions=[[0,0,0]]*count,
+            linkVisualShapeIndices=link_visuals,linkPositions=[[0,0,0]]*count,
             linkOrientations=[[0,0,0,1]]*count,linkInertialFramePositions=[[0,0,0]]*count,
             linkInertialFrameOrientations=[[0,0,0,1]]*count,linkParentIndices=[0]*count,
             linkJointTypes=[p.JOINT_FIXED]*count,linkJointAxis=[[0,0,0]]*count,physicsClientId=client)
+        if roof_vis != -1 and textura_id is not None and textura_id >= 0:
+            p.changeVisualShape(body, 0, textureUniqueId=textura_id, physicsClientId=client)
         ids.append(body);buildings.append(b)
     ground=None
     if suelo:

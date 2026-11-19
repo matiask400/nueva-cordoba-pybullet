@@ -18,3 +18,18 @@ Fuentes:
 Los campos `source`, `source_datasets` y `height_source` identifican la procedencia de las huellas y de las alturas. El código no concede derechos sobre imágenes de Google Maps: las capturas aportadas por el usuario no están incluidas ni se usaron como texturas.
 
 Las alturas interpoladas, fachadas y decoraciones son aproximaciones del proyecto; no son mediciones de campo ni un inventario catastral completo.
+
+## Colores de techo del Buen Pastor
+
+El campo `roof_rgb` del piloto se obtuvo del mosaico
+[Mosaico_CBAFeb2021 de Mapas Córdoba](https://mapascordoba.gob.ar/viewer/mapa/357),
+vuelo del Gran Córdoba de febrero de 2021, IDECOR / AGRISAT. Se recortó la capa
+en EPSG:32720 y se resumieron los colores en el interior de las huellas.
+Los colores derivados se ofrecen bajo [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es)
+según los [términos de Mapas Córdoba](https://www.idecor.gob.ar/terminos-y-condiciones/).
+El archivo `buen-pastor-2021.jpg` es el recorte reproyectado y comprimido del mismo
+mosaico. Se distribuye con la misma atribución y licencia.
+
+Las divisiones marcadas como `division_ortofoto_aproximada` en
+`footprint_adjustment` se guiaron por el mismo mosaico IDECOR / AGRISAT de 2021.
+Las líneas de división interpretadas usan la atribución y licencia indicadas arriba.
